@@ -31,7 +31,17 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en" className={`${display.variable} ${body.variable}`}>
-      <body className="font-body antialiased">{children}</body>
+      <body className="font-body antialiased">
+        {children}
+        <a
+          href="https://leelakrishnavemulapalli.vercel.app/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="fixed bottom-3 right-3 z-40 text-[11px] text-white/35 hover:text-white/70 transition-colors"
+        >
+          Created by VLK
+        </a>
+      </body>
     </html>
   );
 }
