@@ -140,7 +140,7 @@ export default function BirthdayForm({ editData }) {
           className="w-full bg-black/20 border border-white/14 rounded-2xl px-3.5 py-3 text-[15px] outline-none focus:border-gold/60"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="Priyanka"
+          placeholder="Leela"
           maxLength={60}
         />
 
