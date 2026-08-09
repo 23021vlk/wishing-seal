@@ -1,9 +1,9 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { Heart, Sparkles, PartyPopper, Volume2, VolumeX } from "lucide-react";
 import Particles from "./Particles";
 import Envelope from "./Envelope";
-import { themeOf, pacingOf, intensityOf, DEFAULT_SETTINGS } from "@/lib/theme";
+import { themeOf, pacingOf, intensityOf, relationOf, DEFAULT_SETTINGS } from "@/lib/theme";
 
 const HB_NOTES = [
   ["C4", "8n"], ["C4", "8n"], ["D4", "4n"], ["C4", "4n"], ["F4", "4n"], ["E4", "2n"],
@@ -11,6 +11,8 @@ const HB_NOTES = [
   ["C4", "8n"], ["C4", "8n"], ["C5", "4n"], ["A4", "4n"], ["F4", "4n"], ["E4", "4n"], ["D4", "2n"],
   ["Bb4", "8n"], ["Bb4", "8n"], ["A4", "4n"], ["F4", "4n"], ["G4", "4n"], ["F4", "2n"],
 ];
+
+const STAGE_ORDER = ["intro", "reveal", "photo", "message", "final"];
 
 function StaggerText({ text, className, style, wordDelay = 0.07, startDelay = 0 }) {
   const words = text.split(" ");
@@ -38,23 +40,74 @@ export default function BirthdayExperience({ record, isPreview = false }) {
   const theme = themeOf(settings);
   const pacing = pacingOf(settings);
   const intensity = intensityOf(settings);
+  const relation = relationOf(settings);
+  const interactive = settings.interactive !== false;
   const t = (ms) => Math.round(ms * pacing.mult);
 
   const [stage, setStage] = useState("intro");
   const [opened, setOpened] = useState(false);
   const [particleStage, setParticleStage] = useState("idle");
   const [audioOn, setAudioOn] = useState(true);
+  const [hugSent, setHugSent] = useState(false);
+  const [parallax, setParallax] = useState({ x: 0, y: 0 });
   const audioRef = useRef(null);
   const loopRef = useRef(null);
+  const timeoutsRef = useRef([]);
+
+  // Warm up Tone.js ahead of time so tapping "Open it" doesn't wait on a
+  // network fetch before requesting audio — that delay is what makes some
+  // browsers block the sound as "not user-initiated."
+  useEffect(() => {
+    if (!record.musicUrl) import("tone").catch(() => {});
+  }, [record.musicUrl]);
+
+  const schedule = (fn, ms) => {
+    const id = setTimeout(fn, ms);
+    timeoutsRef.current.push(id);
+    return id;
+  };
+  const clearScheduled = () => {
+    timeoutsRef.current.forEach(clearTimeout);
+    timeoutsRef.current = [];
+  };
 
   const begin = async () => {
     setOpened(true);
-    setTimeout(() => { setStage("reveal"); setParticleStage("burst"); }, t(950));
-    setTimeout(() => setParticleStage("ambient"), t(2200));
-    setTimeout(() => setStage("photo"), t(2600));
-    setTimeout(() => setStage("message"), t(record.photoUrl ? 5200 : 3800));
-    setTimeout(() => { setStage("final"); setParticleStage("burst"); }, t(record.photoUrl ? 8400 : 7000));
     startMusic();
+    schedule(() => { setStage("reveal"); setParticleStage("burst"); }, t(950));
+    schedule(() => setParticleStage("ambient"), t(2200));
+    schedule(() => setStage("photo"), t(2600));
+    schedule(() => setStage("message"), t(record.photoUrl ? 5200 : 3800));
+    schedule(() => { setStage("final"); setParticleStage("burst"); }, t(record.photoUrl ? 8400 : 7000));
+  };
+
+  // Tapping the screen during reveal/photo/message skips straight to the
+  // next beat instead of waiting for the timer — the reveal stays timed by
+  // default, but never traps someone who wants to move faster.
+  const skipToNext = () => {
+    if (!interactive) return;
+    if (stage === "intro" || stage === "final") return;
+    clearScheduled();
+    const idx = STAGE_ORDER.indexOf(stage);
+    const next = STAGE_ORDER[idx + 1] || "final";
+    setStage(next);
+    if (next === "final") setParticleStage("burst");
+  };
+
+  const sendHug = (e) => {
+    e.stopPropagation();
+    setHugSent(true);
+    setParticleStage("burst");
+    if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate([30, 40, 30]);
+    setTimeout(() => setHugSent(false), 1600);
+  };
+
+  const onPointerMove = (e) => {
+    if (isPreview) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const px = (e.clientX - rect.left) / rect.width - 0.5;
+    const py = (e.clientY - rect.top) / rect.height - 0.5;
+    setParallax({ x: px * 14, y: py * 14 });
   };
 
   const startMusic = async () => {
@@ -69,7 +122,7 @@ export default function BirthdayExperience({ record, isPreview = false }) {
         oscillator: { type: "triangle" },
         envelope: { attack: 0.02, decay: 0.15, sustain: 0.3, release: 0.4 },
       }).toDestination();
-      synth.volume.value = -8;
+      synth.volume.value = -3;
       let i = 0;
       const loop = new Tone.Loop((time) => {
         const [note, dur] = HB_NOTES[i % HB_NOTES.length];
@@ -83,7 +136,8 @@ export default function BirthdayExperience({ record, isPreview = false }) {
     } catch {}
   };
 
-  const toggleAudio = () => {
+  const toggleAudio = (e) => {
+    e.stopPropagation();
     if (record.musicUrl && audioRef.current) {
       if (audioRef.current.paused) audioRef.current.play().catch(() => {});
       else audioRef.current.pause();
@@ -97,6 +151,7 @@ export default function BirthdayExperience({ record, isPreview = false }) {
 
   useEffect(() => {
     return () => {
+      clearScheduled();
       if (loopRef.current) {
         loopRef.current.loop.dispose();
         loopRef.current.synth.dispose();
@@ -106,7 +161,9 @@ export default function BirthdayExperience({ record, isPreview = false }) {
     };
   }, []);
 
-  const replay = () => {
+  const replay = (e) => {
+    e.stopPropagation();
+    clearScheduled();
     setStage("intro");
     setOpened(false);
     setParticleStage("idle");
@@ -117,13 +174,39 @@ export default function BirthdayExperience({ record, isPreview = false }) {
   };
 
   const burstCount = particleStage === "burst" ? intensity.confetti : Math.round(intensity.confetti * 0.4);
+  const tappable = interactive && stage !== "intro" && stage !== "final";
+  const frame = settings.frame || "circle";
+  const clipId = useId().replace(/:/g, "");
 
   return (
     <div
-      className="relative w-full overflow-hidden rounded-[26px] flex items-center justify-center"
-      style={{ minHeight: isPreview ? 500 : "100vh", background: theme.expBg }}
+      onPointerMove={onPointerMove}
+      onClick={skipToNext}
+      className="relative w-full overflow-hidden rounded-[26px] flex items-center justify-center select-none"
+      style={{
+        minHeight: isPreview ? 500 : "100dvh",
+        background: theme.expBg,
+        cursor: tappable ? "pointer" : "default",
+        WebkitTapHighlightColor: "transparent",
+        touchAction: "manipulation",
+        paddingTop: isPreview ? undefined : "env(safe-area-inset-top)",
+        paddingBottom: isPreview ? undefined : "env(safe-area-inset-bottom)",
+      }}
     >
-      <Particles kind="sparkle" count={intensity.sparkle} active theme={theme} />
+      <div
+        className="absolute inset-0 transition-transform duration-300 ease-out"
+        style={{ transform: `translate(${parallax.x}px, ${parallax.y}px)` }}
+      >
+        <Particles kind="sparkle" count={intensity.sparkle} active theme={theme} />
+      </div>
+      <div
+        className="absolute rounded-full pointer-events-none aura"
+        style={{
+          width: "70%", height: "70%", left: "15%", top: "10%",
+          background: `radial-gradient(circle, ${theme.gold}14, transparent 65%)`,
+          filter: "blur(20px)",
+        }}
+      />
       {(particleStage === "burst" || particleStage === "ambient") && (
         <Particles kind="confetti" count={burstCount} active theme={theme} />
       )}
@@ -141,28 +224,30 @@ export default function BirthdayExperience({ record, isPreview = false }) {
       {stage !== "intro" && (
         <button
           onClick={toggleAudio}
-          className="absolute top-4 right-4 z-10 w-9 h-9 rounded-full bg-white/10 border border-white/20 text-white flex items-center justify-center"
+          className="absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-white/10 border border-white/20 text-white flex items-center justify-center"
+          style={{ touchAction: "manipulation" }}
           aria-label={audioOn ? "Mute music" : "Play music"}
         >
           {audioOn ? <Volume2 size={16} /> : <VolumeX size={16} />}
         </button>
       )}
 
-      <div className="relative z-[6] text-center px-6 py-8 max-w-md">
+      <div className="relative z-[6] text-center px-6 py-8 max-w-md w-full">
         {stage === "intro" && (
-          <div className="flex flex-col items-center gap-4">
+          <div className="flex flex-col items-center gap-4" onClick={(e) => e.stopPropagation()}>
             <Envelope opened={opened} onOpen={begin} theme={theme} />
+            <span className="text-2xl -mb-1">{relation.icon}</span>
             <p
-              className="font-display italic text-lg max-w-[280px] transition-opacity duration-500"
-              style={{ color: theme.ink, opacity: opened ? 0.35 : 0.85 }}
+              className="font-display italic max-w-[280px] transition-opacity duration-500"
+              style={{ color: theme.ink, opacity: opened ? 0.35 : 0.85, fontSize: "clamp(1rem,4.5vw,1.15rem)" }}
             >
-              Someone has a special surprise for you<span className="tracking-widest">…</span>
+              {relation.intro}<span className="tracking-widest">…</span>
             </p>
             {!opened && (
               <button
                 onClick={begin}
-                className="flex items-center gap-2 rounded-2xl px-6 py-3 font-bold text-sm text-[#241203]"
-                style={{ background: `linear-gradient(135deg, ${theme.gold}, ${theme.rose})` }}
+                className="flex items-center gap-2 rounded-2xl px-6 py-3.5 font-bold text-sm text-[#241203]"
+                style={{ background: `linear-gradient(135deg, ${theme.gold}, ${theme.rose})`, touchAction: "manipulation" }}
               >
                 <Sparkles size={16} /> Open it
               </button>
@@ -172,32 +257,56 @@ export default function BirthdayExperience({ record, isPreview = false }) {
 
         {stage === "reveal" && (
           <div className="flex flex-col items-center gap-4">
-            <h1 className="font-display font-semibold text-4xl leading-tight" style={{ color: theme.ink }}>
+            <h1
+              className="font-display font-semibold leading-tight"
+              style={{ color: theme.ink, fontSize: "clamp(1.9rem,8vw,2.6rem)" }}
+            >
               <StaggerText text="Happy Birthday," />
               <br />
               <StaggerText text={`${record.name}! 🎂🎉`} startDelay={0.5} style={{ color: theme.gold }} />
             </h1>
+            {interactive && <TapHint theme={theme} />}
           </div>
         )}
 
         {stage === "photo" && (
           <div className="flex flex-col items-center gap-4 animate-fadeUp">
+            {record.photoUrl && frame === "heart" && (
+              <svg width="0" height="0" style={{ position: "absolute" }}>
+                <defs>
+                  <clipPath id={`heart-${clipId}`} clipPathUnits="objectBoundingBox">
+                    <path d="M0.5,1 C0.5,1 0,0.62 0,0.32 C0,0.12 0.16,0 0.32,0 C0.42,0 0.5,0.06 0.5,0.2 C0.5,0.06 0.58,0 0.68,0 C0.84,0 1,0.12 1,0.32 C1,0.62 0.5,1 0.5,1 Z" />
+                  </clipPath>
+                </defs>
+              </svg>
+            )}
             {record.photoUrl ? (
-              <div className="relative w-60 h-60">
+              <div className="relative w-[min(64vw,250px)] h-[min(58vw,230px)] flex items-center justify-center">
                 <img
                   src={record.photoUrl}
                   alt={record.name}
-                  className="w-60 h-60 object-cover rounded-full border-4 photoIn"
-                  style={{ borderColor: `${theme.gold}8c`, boxShadow: `0 0 40px ${theme.gold}59` }}
+                  className="photoIn"
+                  style={{
+                    width: frame === "heart" ? "100%" : "min(60vw,240px)",
+                    height: frame === "heart" ? "100%" : "min(60vw,240px)",
+                    objectFit: "cover",
+                    borderRadius: frame === "circle" ? "50%" : frame === "rounded" ? 28 : 0,
+                    clipPath: frame === "heart" ? `url(#heart-${clipId})` : "none",
+                    border: frame === "heart" ? "none" : `4px solid ${theme.gold}8c`,
+                    boxShadow: `0 0 40px ${theme.gold}59`,
+                  }}
                 />
-                <span className="shine" />
+                {frame !== "heart" && <span className="shine" style={{ borderRadius: frame === "circle" ? "50%" : 28 }} />}
               </div>
             ) : (
-              <div className="w-52 h-52 rounded-full bg-white/5 border-2 border-dashed border-white/20 flex items-center justify-center">
+              <div className="w-[min(52vw,200px)] h-[min(52vw,200px)] rounded-full bg-white/5 border-2 border-dashed border-white/20 flex items-center justify-center">
                 <PartyPopper size={64} color={theme.gold} />
               </div>
             )}
-            <h2 className="font-display font-semibold text-2xl" style={{ color: theme.ink }}>{record.name} 🎂</h2>
+            <h2 className="font-display font-semibold" style={{ color: theme.ink, fontSize: "clamp(1.3rem,5.5vw,1.6rem)" }}>
+              {record.name} 🎂
+            </h2>
+            {interactive && <TapHint theme={theme} />}
           </div>
         )}
 
@@ -207,25 +316,39 @@ export default function BirthdayExperience({ record, isPreview = false }) {
             <StaggerText
               text={record.message}
               wordDelay={0.045}
-              className="font-display italic text-lg leading-relaxed max-w-[380px] inline-block"
-              style={{ color: theme.ink }}
+              className="font-display italic leading-relaxed max-w-[380px] inline-block"
+              style={{ color: theme.ink, fontSize: "clamp(1rem,4.5vw,1.2rem)" }}
             />
+            {interactive && <TapHint theme={theme} />}
           </div>
         )}
 
         {stage === "final" && (
-          <div className="flex flex-col items-center gap-4 animate-fadeUp">
-            <h1 className="font-display font-semibold text-4xl leading-tight glowPulse" style={{ color: theme.ink }}>
+          <div className="flex flex-col items-center gap-4 animate-fadeUp" onClick={(e) => e.stopPropagation()}>
+            <h1
+              className="font-display font-semibold leading-tight glowPulse"
+              style={{ color: theme.ink, fontSize: "clamp(1.9rem,8vw,2.6rem)" }}
+            >
               Happy Birthday,
               <br />
               <span style={{ color: theme.gold }}>{record.name}</span>! ❤️🎂
             </h1>
-            <button
-              onClick={replay}
-              className="mt-2 flex items-center gap-2 rounded-2xl px-5 py-3 font-semibold text-sm bg-white/8 border border-white/16"
-            >
-              <Sparkles size={15} /> Replay
-            </button>
+            <div className="flex gap-2.5 flex-wrap justify-center mt-1">
+              <button
+                onClick={sendHug}
+                className="flex items-center gap-2 rounded-2xl px-5 py-3 font-semibold text-sm text-[#241203]"
+                style={{ background: `linear-gradient(135deg, ${theme.gold}, ${theme.rose})`, touchAction: "manipulation" }}
+              >
+                <Heart size={16} fill="#241203" /> {hugSent ? "Hug sent 💛" : "Send a hug"}
+              </button>
+              <button
+                onClick={replay}
+                className="flex items-center gap-2 rounded-2xl px-5 py-3 font-semibold text-sm bg-white/8 border border-white/16"
+                style={{ touchAction: "manipulation" }}
+              >
+                <Sparkles size={15} /> Replay
+              </button>
+            </div>
           </div>
         )}
       </div>
@@ -254,10 +377,25 @@ export default function BirthdayExperience({ record, isPreview = false }) {
           transform: rotate(20deg); animation: shineSweep 1.6s ease-out 0.5s 1;
         }
         @keyframes shineSweep { from { left: -60%; } to { left: 130%; } }
+        @keyframes hintPulse { 0%, 100% { opacity: 0.35; } 50% { opacity: 0.8; } }
+        .tapHint { animation: hintPulse 1.8s ease-in-out infinite; }
+        @keyframes auraDrift {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          50% { transform: translate(6%, -4%) scale(1.08); }
+        }
+        .aura { animation: auraDrift 10s ease-in-out infinite; }
         @media (prefers-reduced-motion: reduce) {
-          .photoIn, .glowPulse { animation: none; }
+          .photoIn, .glowPulse, .tapHint, .aura { animation: none; }
         }
       `}</style>
     </div>
+  );
+}
+
+function TapHint({ theme }) {
+  return (
+    <p className="tapHint text-[11px] mt-1" style={{ color: theme.ink }}>
+      tap anywhere to continue
+    </p>
   );
 }

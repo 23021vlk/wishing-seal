@@ -3,10 +3,12 @@ import { supabaseServer } from "@/lib/supabaseServer";
 import { sanitize, DEFAULT_MESSAGE } from "@/lib/utils";
 import { DEFAULT_SETTINGS } from "@/lib/theme";
 
-const ALLOWED_THEME = ["midnight", "golden", "pastel", "galaxy"];
+const ALLOWED_THEME = ["midnight", "golden", "pastel", "galaxy", "roseGold", "ocean", "neon", "ivory"];
 const ALLOWED_INTENSITY = ["subtle", "balanced", "extra"];
 const ALLOWED_PACING = ["quick", "cinematic", "slow"];
 const ALLOWED_PARTICLES = ["confetti", "stars", "hearts", "mixed"];
+const ALLOWED_RELATION = ["sister","brother","girlfriend","boyfriend","mom","dad","friend","relative","junior","senior","general"];
+const ALLOWED_FRAME = ["circle","rounded","heart"];
 
 function cleanSettings(input) {
   const s = { ...DEFAULT_SETTINGS, ...(input || {}) };
@@ -15,6 +17,9 @@ function cleanSettings(input) {
     intensity: ALLOWED_INTENSITY.includes(s.intensity) ? s.intensity : "balanced",
     pacing: ALLOWED_PACING.includes(s.pacing) ? s.pacing : "cinematic",
     particles: ALLOWED_PARTICLES.includes(s.particles) ? s.particles : "confetti",
+    interactive: s.interactive === false ? false : true,
+    relation: ALLOWED_RELATION.includes(s.relation) ? s.relation : "general",
+    frame: ALLOWED_FRAME.includes(s.frame) ? s.frame : "circle",
   };
 }
 

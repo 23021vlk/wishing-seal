@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { Eye, Gift, Image as ImageIcon, Music as MusicIcon, Upload, X, Settings2, ChevronDown } from "lucide-react";
 import BirthdayExperience from "./BirthdayExperience";
 import { DEFAULT_MESSAGE, unescapeHtml } from "@/lib/utils";
-import { THEMES, INTENSITY, PACING, PARTICLE_MIX, DEFAULT_SETTINGS, themeOf } from "@/lib/theme";
+import { THEMES, INTENSITY, PACING, PARTICLE_MIX, RELATIONS, FRAMES, DEFAULT_SETTINGS, themeOf } from "@/lib/theme";
 
 function resizeImage(file, maxW = 900, quality = 0.82) {
   return new Promise((resolve, reject) => {
@@ -43,8 +43,9 @@ function fileToDataURL(file, maxBytes = 8 * 1024 * 1024) {
 export default function BirthdayForm({ editData }) {
   const router = useRouter();
   const [name, setName] = useState(editData ? unescapeHtml(editData.name) : "");
+  const editDataDefault = editData ? RELATIONS[editData.settings?.relation]?.defaultMessage || DEFAULT_MESSAGE : DEFAULT_MESSAGE;
   const [message, setMessage] = useState(
-    editData?.message && editData.message !== DEFAULT_MESSAGE ? unescapeHtml(editData.message) : ""
+    editData?.message && editData.message !== editDataDefault ? unescapeHtml(editData.message) : ""
   );
   const [photo, setPhoto] = useState(editData?.photo_url || null);
   const [photoChanged, setPhotoChanged] = useState(false);
@@ -60,6 +61,13 @@ export default function BirthdayForm({ editData }) {
   const musicInput = useRef(null);
   const theme = themeOf(settings);
   const setS = (key, val) => setSettings((s) => ({ ...s, [key]: val }));
+  const pickRelation = (key) => {
+    // Picking a relation also switches theme, particle mix, and photo frame to
+    // that relation's defaults — still fully overridable below.
+    const r = RELATIONS[key];
+    setSettings((s) => ({ ...s, relation: key, theme: r.theme, particles: r.particles, frame: r.frame }));
+  };
+  const relationDefault = RELATIONS[settings.relation]?.defaultMessage || DEFAULT_MESSAGE;
 
   const handlePhoto = async (e) => {
     const f = e.target.files?.[0];
@@ -95,7 +103,7 @@ export default function BirthdayForm({ editData }) {
     setBusy(true);
     setError("");
     try {
-      const payload = { name: name.trim(), message: message.trim(), musicName, settings };
+      const payload = { name: name.trim(), message: message.trim() || relationDefault, musicName, settings };
       if (photoChanged) payload.photoBase64 = photo;
       if (!photo && editData?.photo_url) payload.removePhoto = true;
       if (musicChanged) payload.musicBase64 = musicData;
@@ -144,14 +152,43 @@ export default function BirthdayForm({ editData }) {
           maxLength={60}
         />
 
-        <label className="block text-xs font-semibold tracking-wide text-[#D9C6DF] mt-4 mb-1.5">
+        <label className="block text-xs font-semibold tracking-wide text-[#D9C6DF] mt-5 mb-2">
+          Who&apos;s it for? <span className="text-mutedDim font-normal">picks a matching look</span>
+        </label>
+        <div className="grid grid-cols-5 gap-1.5">
+          {Object.entries(RELATIONS).map(([key, r]) => {
+            const active = (settings.relation || "general") === key;
+            const rTheme = THEMES[r.theme];
+            return (
+              <button
+                key={key}
+                onClick={() => pickRelation(key)}
+                className="flex flex-col items-center gap-1 py-2 rounded-xl border-[1.5px] transition-transform active:scale-95"
+                style={{
+                  borderColor: active ? rTheme.gold : "rgba(255,255,255,0.12)",
+                  background: active ? `${rTheme.gold}18` : "rgba(255,255,255,0.03)",
+                }}
+              >
+                <span className="text-base leading-none">{r.icon}</span>
+                <span
+                  className="text-[9px] font-semibold leading-tight text-center"
+                  style={{ color: active ? rTheme.gold : "#8b7691" }}
+                >
+                  {r.label}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        <label className="block text-xs font-semibold tracking-wide text-[#D9C6DF] mt-5 mb-1.5">
           Personal message <span className="text-mutedDim font-normal">optional</span>
         </label>
         <textarea
           className="w-full bg-black/20 border border-white/14 rounded-2xl px-3.5 py-3 text-[15px] outline-none focus:border-gold/60 min-h-[100px] resize-y"
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          placeholder={DEFAULT_MESSAGE}
+          placeholder={relationDefault}
           maxLength={600}
         />
 
@@ -226,20 +263,23 @@ export default function BirthdayForm({ editData }) {
         {showAdvanced && (
           <div className="mt-2.5 pt-1">
             <GroupLabel>Theme</GroupLabel>
-            <div className="grid grid-cols-2 gap-2">
-              {Object.entries(THEMES).map(([key, t]) => (
+            <div className="grid grid-cols-4 gap-2">
+              {Object.entries(THEMES).map(([key, tm]) => (
                 <button
                   key={key}
                   onClick={() => setS("theme", key)}
-                  className="flex flex-col items-center gap-1.5 py-2.5 px-2 rounded-xl bg-white/[0.03] border-[1.5px]"
-                  style={{ borderColor: settings.theme === key ? t.gold : "rgba(255,255,255,0.14)" }}
+                  className="flex flex-col items-center gap-1.5 rounded-xl overflow-hidden border-[1.5px] transition-transform active:scale-95"
+                  style={{ borderColor: settings.theme === key ? tm.gold : "rgba(255,255,255,0.14)" }}
                 >
-                  <span className="flex gap-[3px]">
-                    {t.swatch.map((c, i) => (
-                      <span key={i} className="w-3 h-3 rounded-full border border-white/20" style={{ background: c }} />
-                    ))}
+                  <span
+                    className="w-full h-10 flex items-end justify-center pb-1"
+                    style={{ background: tm.bg }}
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full" style={{ background: tm.gold, boxShadow: `0 0 6px 1px ${tm.gold}` }} />
                   </span>
-                  <span className="text-[10.5px]" style={{ color: settings.theme === key ? t.gold : "#B79DBE" }}>{t.label}</span>
+                  <span className="text-[9.5px] font-medium pb-1.5" style={{ color: settings.theme === key ? tm.gold : "#B79DBE" }}>
+                    {tm.label}
+                  </span>
                 </button>
               ))}
             </div>
@@ -252,6 +292,37 @@ export default function BirthdayForm({ editData }) {
 
             <GroupLabel>Particle style</GroupLabel>
             <PillRow options={PARTICLE_MIX} current={settings.particles} onPick={(k) => setS("particles", k)} theme={theme} />
+
+            <GroupLabel>Photo frame</GroupLabel>
+            <PillRow options={FRAMES} current={settings.frame || "circle"} onPick={(k) => setS("frame", k)} theme={theme} />
+
+            <GroupLabel>Interaction</GroupLabel>
+            <button
+              onClick={() => setS("interactive", !(settings.interactive !== false))}
+              className="w-full flex items-center justify-between rounded-xl px-3.5 py-3 border text-left"
+              style={{
+                background: settings.interactive !== false ? `${theme.gold}14` : "rgba(255,255,255,0.03)",
+                borderColor: settings.interactive !== false ? `${theme.gold}55` : "rgba(255,255,255,0.12)",
+              }}
+            >
+              <span>
+                <span className="block text-xs font-semibold" style={{ color: settings.interactive !== false ? theme.gold : "#F3E9EF" }}>
+                  Tap-to-advance
+                </span>
+                <span className="block text-[10.5px] text-mutedDim mt-0.5">
+                  Lets them tap the screen to skip ahead instead of only waiting on the timer
+                </span>
+              </span>
+              <span
+                className="w-9 h-5 rounded-full relative shrink-0 ml-3"
+                style={{ background: settings.interactive !== false ? theme.gold : "rgba(255,255,255,0.18)" }}
+              >
+                <span
+                  className="absolute top-0.5 w-4 h-4 rounded-full bg-[#170a20] transition-all"
+                  style={{ left: settings.interactive !== false ? 18 : 2 }}
+                />
+              </span>
+            </button>
           </div>
         )}
 
@@ -296,7 +367,7 @@ export default function BirthdayForm({ editData }) {
             <BirthdayExperience
               record={{
                 name: name.trim() || "Friend",
-                message: message.trim() || DEFAULT_MESSAGE,
+                message: message.trim() || relationDefault,
                 photoUrl: photo,
                 musicUrl: musicData,
                 settings,

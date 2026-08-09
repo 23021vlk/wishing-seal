@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { Copy, Share2, Eye, Pencil, Trash2, Check, ArrowLeft } from "lucide-react";
 import Envelope from "./Envelope";
 import { unescapeHtml } from "@/lib/utils";
-import { themeOf } from "@/lib/theme";
+import { themeOf, relationOf } from "@/lib/theme";
 
 export default function ResultActions({ record, link }) {
   const router = useRouter();
@@ -12,6 +12,7 @@ export default function ResultActions({ record, link }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const theme = themeOf(record.settings);
+  const relation = relationOf(record.settings);
 
   const copyLink = async () => {
     try {
@@ -43,10 +44,19 @@ export default function ResultActions({ record, link }) {
   };
 
   return (
-    <div className="w-full max-w-[440px] mx-auto px-4 py-8">
-      <div className="glass rounded-[26px] p-7 shadow-glow text-center">
+    <div className="relative w-full max-w-[440px] mx-auto px-4 py-8">
+      <div className="absolute -top-16 -left-16 w-72 h-72 rounded-full blur-3xl pointer-events-none" style={{ background: `${theme.gold}1a` }} />
+      <div className="absolute -bottom-20 -right-16 w-80 h-80 rounded-full blur-3xl pointer-events-none" style={{ background: `${theme.rose}1a` }} />
+
+      <div className="glass rounded-[26px] p-7 shadow-glow text-center relative">
         <Envelope opened theme={theme} onOpen={() => {}} />
-        <h1 className="font-display font-semibold text-2xl mt-3.5 mb-1.5">Your birthday surprise is ready! 🎉</h1>
+        <div
+          className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 mt-3.5 text-[11px] font-semibold"
+          style={{ background: `${theme.gold}1c`, color: theme.gold, border: `1px solid ${theme.gold}40` }}
+        >
+          <span>{relation.icon}</span> {relation.label}
+        </div>
+        <h1 className="font-display font-semibold text-2xl mt-2 mb-1.5">Your birthday surprise is ready! 🎉</h1>
         <p className="text-sm text-muted mb-4 leading-relaxed">
           Share this link with {unescapeHtml(record.name)} — it opens straight into their surprise.
         </p>
