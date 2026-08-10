@@ -15,14 +15,14 @@ const body = Inter({
 });
 
 export const metadata = {
-  title: "Wishing Seal — send a birthday surprise",
+  title: "VLKify — send a birthday surprise",
   description:
-    "Create a personalized, cinematic birthday surprise page in minutes and share it with one link.",
+    "Create a personalized, cinematic birthday greeting in minutes and share it with one link.",
   metadataBase: process.env.NEXT_PUBLIC_SITE_URL
     ? new URL(process.env.NEXT_PUBLIC_SITE_URL)
     : undefined,
   openGraph: {
-    title: "Wishing Seal",
+    title: "VLKify",
     description: "A birthday surprise, wrapped in one link.",
     type: "website",
   },

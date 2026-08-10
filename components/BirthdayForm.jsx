@@ -127,59 +127,64 @@ export default function BirthdayForm({ editData }) {
   };
 
   return (
-    <div className="relative w-full max-w-[440px] mx-auto px-4 py-8">
-      <div className="absolute -top-16 -left-16 w-72 h-72 rounded-full blur-3xl pointer-events-none" style={{ background: `${theme.gold}1a` }} />
-      <div className="absolute -bottom-20 -right-16 w-80 h-80 rounded-full blur-3xl pointer-events-none" style={{ background: `${theme.rose}1a` }} />
+    <>
+      <div
+        className="fixed inset-0 -z-10 transition-[background] duration-700"
+        style={{ background: theme.bg }}
+      />
+      <div className="relative w-full max-w-[440px] sm:max-w-[480px] md:max-w-[560px] mx-auto px-4 py-8 md:py-12">
+        <div className="absolute -top-16 -left-16 w-72 h-72 rounded-full blur-3xl pointer-events-none" style={{ background: `${theme.gold}1a` }} />
+        <div className="absolute -bottom-20 -right-16 w-80 h-80 rounded-full blur-3xl pointer-events-none" style={{ background: `${theme.rose}1a` }} />
 
-      <Brand theme={theme} />
+        <Brand theme={theme} />
 
-      <div className="glass rounded-[26px] p-7 shadow-glow relative">
-        <h1 className="font-display font-semibold text-3xl text-center leading-tight mt-1 mb-2">
-          {editData ? "Edit the surprise" : "Create a birthday surprise"}
-        </h1>
-        <p className="text-sm text-muted text-center leading-relaxed mb-5">
-          Fill in a few details and we&apos;ll wrap them into a page only they&apos;ll see the way you meant it.
-        </p>
+        <div className="glass rounded-[26px] p-6 sm:p-7 md:p-9 shadow-glow relative">
+          <h1 className="font-display font-semibold text-3xl md:text-4xl text-center leading-tight mt-1 mb-2">
+            {editData ? "Edit the surprise" : "Create a birthday surprise"}
+          </h1>
+          <p className="text-sm text-muted text-center leading-relaxed mb-5">
+            Fill in a few details and we&apos;ll wrap them into a page only they&apos;ll see the way you meant it.
+          </p>
 
-        <label className="block text-xs font-semibold tracking-wide text-[#D9C6DF] mt-4 mb-1.5">
-          Birthday person&apos;s name<span className="text-rose"> *</span>
-        </label>
-        <input
-          className="w-full bg-black/20 border border-white/14 rounded-2xl px-3.5 py-3 text-[15px] outline-none focus:border-gold/60"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Leela"
-          maxLength={60}
-        />
+          <label className="block text-xs font-semibold tracking-wide text-[#D9C6DF] mt-4 mb-1.5">
+            Birthday person&apos;s name<span className="text-rose"> *</span>
+          </label>
+          <input
+            className="w-full bg-black/20 border border-white/14 rounded-2xl px-3.5 py-3 text-[15px] outline-none focus:border-gold/60"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Leela"
+            maxLength={60}
+          />
 
-        <label className="block text-xs font-semibold tracking-wide text-[#D9C6DF] mt-5 mb-2">
-          Who&apos;s it for? <span className="text-mutedDim font-normal">picks a matching look</span>
-        </label>
-        <div className="grid grid-cols-5 gap-1.5">
-          {Object.entries(RELATIONS).map(([key, r]) => {
-            const active = (settings.relation || "general") === key;
-            const rTheme = THEMES[r.theme];
-            return (
-              <button
-                key={key}
-                onClick={() => pickRelation(key)}
-                className="flex flex-col items-center gap-1 py-2 rounded-xl border-[1.5px] transition-transform active:scale-95"
-                style={{
-                  borderColor: active ? rTheme.gold : "rgba(255,255,255,0.12)",
-                  background: active ? `${rTheme.gold}18` : "rgba(255,255,255,0.03)",
-                }}
-              >
-                <span className="text-base leading-none">{r.icon}</span>
-                <span
-                  className="text-[9px] font-semibold leading-tight text-center"
-                  style={{ color: active ? rTheme.gold : "#8b7691" }}
+          <label className="block text-xs font-semibold tracking-wide text-[#D9C6DF] mt-5 mb-2">
+            Who&apos;s it for? <span className="text-mutedDim font-normal">picks a matching look</span>
+          </label>
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
+            {Object.entries(RELATIONS).map(([key, r]) => {
+              const active = (settings.relation || "general") === key;
+              const rTheme = THEMES[r.theme];
+              return (
+                <button
+                  key={key}
+                  onClick={() => pickRelation(key)}
+                  className="flex flex-col items-center gap-1 py-2.5 rounded-xl border-[1.5px] transition-transform active:scale-95"
+                  style={{
+                    borderColor: active ? rTheme.gold : "rgba(255,255,255,0.12)",
+                    background: active ? `${rTheme.gold}18` : "rgba(255,255,255,0.03)",
+                  }}
                 >
-                  {r.label}
-                </span>
-              </button>
-            );
-          })}
-        </div>
+                  <span className="text-lg leading-none">{r.icon}</span>
+                  <span
+                    className="text-[10px] font-semibold leading-tight text-center"
+                    style={{ color: active ? rTheme.gold : "#8b7691" }}
+                  >
+                    {r.label}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
 
         <label className="block text-xs font-semibold tracking-wide text-[#D9C6DF] mt-5 mb-1.5">
           Personal message <span className="text-mutedDim font-normal">optional</span>
@@ -377,7 +382,8 @@ export default function BirthdayForm({ editData }) {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 }
 
@@ -385,7 +391,7 @@ function Brand({ theme }) {
   return (
     <div className="flex items-center gap-2 justify-center mb-3">
       <span style={{ color: theme.gold }}>✦</span>
-      <span className="font-display italic text-xl tracking-wide">Wishing Seal</span>
+      <span className="font-display italic text-xl md:text-2xl tracking-wide">VLKify</span>
     </div>
   );
 }

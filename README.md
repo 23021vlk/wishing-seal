@@ -1,8 +1,9 @@
-# Wishing Seal 🎂
+# VLKify 🎂
 
-A personalized, cinematic birthday-surprise page generator. Create a page for someone,
-get one shareable link, and they open it to an animated reveal — their name, photo,
-your message, confetti, and music, wrapped like a sealed letter.
+A personalized, cinematic birthday-greeting generator. Pick who it's for, write a message
+(or don't — it'll write something fitting), add a photo and music, and get one shareable
+link. They open it to an animated reveal: an envelope that unseals, their name, photo,
+your message, confetti, and music.
 
 ## Stack
 
@@ -34,55 +35,60 @@ Open http://localhost:3000.
 3. Under **Environment Variables**, add:
    - `SUPABASE_URL`
    - `SUPABASE_SERVICE_ROLE_KEY`
-   - `NEXT_PUBLIC_SITE_URL` → `https://<your-vercel-domain>.vercel.app` (update this once
-     you attach a custom domain, and redeploy)
+   - `NEXT_PUBLIC_SITE_URL` → your deployed domain (e.g. `https://vlkify.vercel.app`)
 4. Click **Deploy**.
 
-Generated links will look like `https://yourdomain.com/b/priyanka-a1b2c3d4` — one domain,
-unlimited unique birthday pages, exactly as specced.
+Generated links look like `https://vlkify.vercel.app/b/leela-a1b2c3d4` — one domain,
+unlimited unique greeting pages.
 
 ## How it works
 
-- `/` — the creation form (name, message, photo, music, live preview, and an **Advanced
-  settings** panel: theme, animation intensity, reveal pacing, particle style).
+- `/` — the creation form: name, "who's it for," message, photo, music, live preview,
+  and Advanced Settings.
 - `POST /api/birthdays` — validates input, uploads photo/music to Supabase Storage,
-  inserts the row (including the chosen `settings`), and sets an `httpOnly` cookie so
-  only the creator's browser can later edit or delete this specific page.
-- `/result/[id]` — shows the generated link with Copy / Share / Preview / Edit / Delete.
-- `/b/[slug]` — the public recipient page. Server-rendered, so it loads fast and works
-  as a proper shareable link (correct Open Graph title too).
+  inserts the row, sets an `httpOnly` cookie so only the creator's browser can later
+  edit or delete this specific page.
+- `/result/[id]` — the generated link with Copy / Share / Preview / Edit / Delete, styled
+  to match the chosen relation and theme.
+- `/b/[slug]` — the public recipient page. Server-rendered for fast loads and a correct
+  Open Graph title.
 - `/edit/[id]` and `PATCH /api/birthdays/[id]` — update a page (owner-cookie protected).
-- If no music is uploaded, the reveal plays a short synthesized "Happy Birthday" tune
-  client-side (via Tone.js) instead of shipping a licensed MP3.
-- If no photo is uploaded, a glowing party-popper icon fills that beat of the reveal
-  instead, so the experience always feels complete.
+
+## Music
+
+If the creator doesn't upload a track, the reveal plays a bundled default recording —
+`public/audio/default-happy-birthday.wav`, an original synthesized rendering of the
+"Happy Birthday to You" melody (public domain in the US since 2016). It plays through a
+plain HTML `<audio>` element, triggered directly inside the "Open it" tap — the same
+reliable path used for custom uploads, and the most autoplay-policy-friendly way to start
+audio on both mobile and desktop.
+
+## Who's it for — relationship modes
+
+Sister, Brother, Girlfriend, Boyfriend, Mom, Dad, Friend, Relative, Junior, Senior, or
+Just because. Picking one auto-applies a matching theme, particle style, and photo frame
+(hearts for girlfriend/boyfriend), and swaps in a message written for that relationship —
+still fully editable.
 
 ## Advanced settings
 
-Each surprise carries its own `settings` object, chosen in the creation form and stored
-alongside it (validated server-side against an allow-list so a tampered request can't
-inject arbitrary values):
-
-- **Theme** — Midnight Romance / Golden Hour / Pastel Dream / Galaxy Night. Recolors the
-  whole experience: background gradients, gold/rose accents, particle hues.
-- **Animation intensity** — Subtle / Balanced / Extra. Controls particle count and fall
-  speed for the confetti and sparkle field.
-- **Reveal pacing** — Quick / Cinematic / Slow burn. Stretches or compresses the timing
-  between each stage of the reveal.
+- **Theme** — 8 options, each with a genuinely different palette: Midnight Romance,
+  Golden Hour, Blush Mauve, Galaxy Night, Rose Gold, Ocean Breeze, Emerald Luxe, Classic
+  Ivory. Changing it re-skins the whole app, not just the reveal screen.
+- **Animation intensity** — Subtle / Balanced / Extra — particle count and speed.
+- **Reveal pacing** — Quick / Cinematic / Slow burn.
 - **Particle style** — Confetti / Stars & sparkles / Hearts / Everything.
+- **Photo frame** — Circle / Rounded / Heart.
+- **Tap-to-advance** — lets the recipient tap the screen to skip ahead instead of only
+  waiting on the timer.
 
-## The reveal sequence
+## Mobile
 
-1. **Envelope intro** — a wax-sealed envelope; tapping it plays a 3D flap-opening
-   animation before the letter slides out.
-2. **Name reveal** — the title fades in word-by-word with a soft blur-to-focus stagger.
-3. **Photo** — pops in with a shine-sweep highlight across the frame (skipped gracefully
-   if no photo was uploaded).
-4. **Message** — same staggered word reveal, over a floating heart.
-5. **Final** — the closing line with a slow glowing pulse, plus a Replay button.
-
-Confetti/star/heart particles fall with per-particle rotation and horizontal drift, and a
-twinkling sparkle field runs underneath the whole sequence for depth.
+Uses `100dvh` (not `100vh`, which is wrong on mobile browsers with a collapsing address
+bar), respects the iPhone notch/home-indicator via safe-area insets, scales text with
+`clamp()` so nothing overflows on narrow screens, and disables the double-tap-zoom delay
+and long-press callouts on buttons. Layout widens gracefully on tablet/laptop instead of
+staying pinned to a narrow mobile column.
 
 ## Security notes already handled
 
@@ -90,16 +96,7 @@ twinkling sparkle field runs underneath the whole sequence for depth.
   `accept` attribute, which is only a UI hint).
 - All text is HTML-escaped before it's stored.
 - The Supabase **service role key** is only ever read inside `app/api/**` and
-  `lib/supabaseServer.js` — it is never imported into a `"use client"` file, so it
-  never reaches the browser bundle.
-- Edit/delete require an `httpOnly` cookie matching the row's `owner_token`; there's no
-  way to edit someone else's page just by knowing its id.
-
-## Extending it further
-
-- Swap the synthesized default tune for a licensed royalty-free MP3 in `public/audio/`
-  if you'd rather ship a real recording.
-- Add rate limiting (e.g. Vercel's built-in or `@upstash/ratelimit`) on
-  `POST /api/birthdays` if you expect public, unauthenticated traffic.
-- Re-encode uploaded photos server-side (e.g. with `sharp`) to strip EXIF data before
-  storing, for extra safety with user uploads.
+  `lib/supabaseServer.js` — never imported into a `"use client"` file.
+- Edit/delete require an `httpOnly` cookie matching the row's `owner_token`.
+- `settings` values (theme, relation, etc.) are checked against an allow-list
+  server-side, so a tampered request can't inject arbitrary values.

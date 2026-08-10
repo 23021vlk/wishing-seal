@@ -7,7 +7,7 @@ export async function generateMetadata({ params }) {
   const supabase = supabaseServer();
   const { data } = await supabase.from("birthdays").select("name").eq("id", id).single();
   return {
-    title: data ? `A birthday surprise for ${unescapeHtml(data.name)} 🎂` : "Wishing Seal",
+    title: data ? `A birthday surprise for ${unescapeHtml(data.name)} 🎂` : "VLKify",
   };
 }
 
