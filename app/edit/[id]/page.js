@@ -7,7 +7,7 @@ export default async function EditPage({ params }) {
 
   if (!data) {
     return (
-      <main className="min-h-screen flex items-center justify-center px-4">
+      <main className="min-h-dvh flex items-center justify-center px-4">
         <div className="glass rounded-[26px] p-8 max-w-sm text-center">
           <p className="text-sm text-muted">That surprise no longer exists.</p>
         </div>
@@ -16,7 +16,7 @@ export default async function EditPage({ params }) {
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center">
+    <main className="min-h-dvh flex items-center justify-center">
       <BirthdayForm editData={data} />
     </main>
   );

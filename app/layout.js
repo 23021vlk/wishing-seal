@@ -45,7 +45,7 @@ export default function RootLayout({ children }) {
           href="https://leelakrishnavemulapalli.vercel.app/"
           target="_blank"
           rel="noopener noreferrer"
-          className="fixed bottom-3 right-3 z-40 text-[11px] text-white/35 hover:text-white/70 transition-colors"
+          className="fixed bottom-3 left-1/2 -translate-x-1/2 z-40 text-[11px] text-white/35 hover:text-white/70 transition-colors whitespace-nowrap"
         >
           Created by VLK
         </a>

@@ -18,7 +18,7 @@ export default async function RecipientPage({ params }) {
 
   if (!data) {
     return (
-      <main className="min-h-screen flex items-center justify-center px-4">
+      <main className="min-h-dvh flex items-center justify-center px-4">
         <div className="glass rounded-[26px] p-8 max-w-sm text-center">
           <h1 className="font-display font-semibold text-2xl mb-2">This surprise couldn&apos;t be found</h1>
           <p className="text-sm text-muted mb-4">The link may be mistyped, or the surprise was removed.</p>
@@ -29,7 +29,7 @@ export default async function RecipientPage({ params }) {
   }
 
   return (
-    <main className="min-h-screen">
+    <main className="min-h-dvh">
       <BirthdayExperience
         record={{
           name: unescapeHtml(data.name),

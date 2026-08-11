@@ -7,7 +7,7 @@ export default async function ResultPage({ params }) {
 
   if (!data) {
     return (
-      <main className="min-h-screen flex items-center justify-center px-4">
+      <main className="min-h-dvh flex items-center justify-center px-4">
         <div className="glass rounded-[26px] p-8 max-w-sm text-center">
           <p className="text-sm text-muted">
             No surprise found. <a href="/" className="text-gold underline">Create one</a>.
@@ -21,7 +21,7 @@ export default async function ResultPage({ params }) {
   const link = `${site}/b/${data.slug}-${data.id}`;
 
   return (
-    <main className="min-h-screen flex items-center justify-center">
+    <main className="min-h-dvh flex items-center justify-center">
       <ResultActions record={data} link={link} />
     </main>
   );
