@@ -5,9 +5,12 @@
 html {
   background: #0b0510;
   -webkit-text-size-adjust: 100%;
-  /* overflow-x is intentionally NOT set on <html> — doing so breaks
-     vertical scrolling entirely on iOS Safari. Horizontal clipping is
-     handled on <body> below instead. */
+  overflow-x: clip;
+  /* overflow-x: hidden is intentionally NOT used on <html> — that breaks
+     vertical scrolling entirely on iOS Safari. overflow-x: clip achieves
+     the same visual clipping without creating a scroll container, so it
+     can't cause that bug. (Older browsers without "clip" support simply
+     ignore this line — body's overflow-x: hidden below still covers them.) */
 }
 
 body {
@@ -48,6 +51,7 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
   border: 1px solid rgba(255,255,255,0.12);
+  overflow: hidden;
 }
 
 @media (prefers-reduced-motion: reduce) {

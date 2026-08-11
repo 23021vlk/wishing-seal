@@ -49,7 +49,7 @@ export default function ResultActions({ record, link }) {
         className="fixed inset-0 -z-10 transition-[background] duration-700"
         style={{ background: theme.bg }}
       />
-      <div className="relative w-full max-w-[440px] sm:max-w-[480px] md:max-w-[560px] mx-auto px-4 py-8 md:py-12">
+      <div className="relative w-full max-w-[440px] sm:max-w-[480px] md:max-w-[560px] mx-auto px-4 py-8 md:py-12 overflow-x-hidden">
         <div className="absolute -top-16 -left-16 w-72 h-72 rounded-full blur-3xl pointer-events-none" style={{ background: `${theme.gold}1a` }} />
         <div className="absolute -bottom-20 -right-16 w-80 h-80 rounded-full blur-3xl pointer-events-none" style={{ background: `${theme.rose}1a` }} />
 
