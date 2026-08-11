@@ -2,6 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+*, *::before, *::after {
+  min-width: 0;
+}
+/* Flex/grid children default to min-width: auto, which lets their content
+   refuse to shrink below its own natural width — the classic hidden cause
+   of a layout that looks correct in every class but still overflows
+   horizontally on a narrow phone. Zeroing it out everywhere lets every
+   element actually shrink to fit its container and wrap text normally. */
+
 html {
   background: #0b0510;
   -webkit-text-size-adjust: 100%;
