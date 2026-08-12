@@ -1,5 +1,6 @@
 import { Cormorant_Garamond, Inter } from "next/font/google";
 import "./globals.css";
+import DisableInspect from "@/components/DisableInspect";
 
 const display = Cormorant_Garamond({
   subsets: ["latin"],
@@ -42,6 +43,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" className={`${display.variable} ${body.variable}`}>
       <body className="font-body antialiased">
+        <DisableInspect />
         {children}
         <a
           href="https://leelakrishnavemulapalli.vercel.app/"

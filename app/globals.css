@@ -15,6 +15,7 @@ html {
   background: #0b0510;
   -webkit-text-size-adjust: 100%;
   overflow-x: clip;
+  overflow-y: auto;
   touch-action: pan-y;
   /* overflow-x: hidden is intentionally NOT used on <html> — that breaks
      vertical scrolling entirely on iOS Safari. overflow-x: clip achieves
@@ -24,12 +25,15 @@ html {
      touch-action: pan-y explicitly permits only vertical touch-panning —
      horizontal dragging and pinch/double-tap zoom (the actual causes of
      content becoming draggable sideways) are not in the allowed list, so
-     the browser doesn't hand those gestures to the page at all. */
+     the browser doesn't hand those gestures to the page at all.
+     overflow-y: auto is set explicitly (not left to the "visible" default)
+     as a guarantee that vertical scrolling is always available here. */
 }
 
 body {
   overscroll-behavior-y: contain;
   overflow-x: hidden;
+  overflow-y: auto;
   max-width: 100vw;
   touch-action: pan-y;
   background:
