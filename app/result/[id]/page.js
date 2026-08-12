@@ -21,7 +21,7 @@ export default async function ResultPage({ params }) {
   const link = `${site}/b/${data.slug}-${data.id}`;
 
   return (
-    <main className="min-h-dvh flex items-center justify-center">
+    <main className="min-h-dvh">
       <ResultActions record={data} link={link} />
     </main>
   );

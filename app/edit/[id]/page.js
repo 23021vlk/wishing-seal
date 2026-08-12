@@ -16,7 +16,7 @@ export default async function EditPage({ params }) {
   }
 
   return (
-    <main className="min-h-dvh flex items-center justify-center">
+    <main className="min-h-dvh">
       <BirthdayForm editData={data} />
     </main>
   );

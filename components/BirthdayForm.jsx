@@ -361,7 +361,7 @@ export default function BirthdayForm({ editData }) {
       </div>
 
       {showPreview && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
           <button
             onClick={() => setShowPreview(false)}
             className="absolute top-5 right-5 w-10 h-10 rounded-full bg-white/10 border border-white/20 text-white flex items-center justify-center z-[60]"

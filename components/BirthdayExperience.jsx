@@ -105,7 +105,7 @@ export default function BirthdayExperience({ record, isPreview = false }) {
   return (
     <div
       onClick={skipToNext}
-      className="relative w-full overflow-hidden rounded-[26px] flex items-center justify-center select-none"
+      className="relative w-full rounded-[26px] flex items-center justify-center select-none"
       style={{
         minHeight: isPreview ? 500 : "100dvh",
         background: theme.expBg,
@@ -114,6 +114,12 @@ export default function BirthdayExperience({ record, isPreview = false }) {
         touchAction: "manipulation",
         paddingTop: isPreview ? undefined : "env(safe-area-inset-top)",
         paddingBottom: isPreview ? undefined : "env(safe-area-inset-bottom)",
+        overflowX: "hidden",
+        // No overflow-y restriction here on purpose: this container only has a
+        // *minimum* height, so when a long message makes it taller than the
+        // screen it should simply grow and let the page scroll — clipping it
+        // (the old "overflow-hidden" here) made the overflow permanently
+        // invisible with no way to scroll to it at all.
       }}
     >
       <Particles kind="sparkle" count={intensity.sparkle} active theme={theme} />
