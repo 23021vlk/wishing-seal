@@ -248,7 +248,7 @@ export default function BirthdayExperience({ record, isPreview = false }) {
             >
               Happy Birthday,
               <br />
-              <span style={{ color: theme.gold }}>{record.name}</span>! ❤️🎂
+              <span style={{ color: theme.gold }}>{record.name}</span>! 🎂
             </h1>
             <button
               onClick={replay}
