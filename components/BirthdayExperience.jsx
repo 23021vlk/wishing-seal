@@ -111,15 +111,14 @@ export default function BirthdayExperience({ record, isPreview = false }) {
         background: theme.expBg,
         cursor: tappable ? "pointer" : "default",
         WebkitTapHighlightColor: "transparent",
-        touchAction: "manipulation",
+        touchAction: "pan-y",
         paddingTop: isPreview ? undefined : "env(safe-area-inset-top)",
         paddingBottom: isPreview ? undefined : "env(safe-area-inset-bottom)",
-        overflowX: "hidden",
-        // No overflow-y restriction here on purpose: this container only has a
-        // *minimum* height, so when a long message makes it taller than the
-        // screen it should simply grow and let the page scroll — clipping it
-        // (the old "overflow-hidden" here) made the overflow permanently
-        // invisible with no way to scroll to it at all.
+        // No overflow-x/y set here on purpose — <html> already clips
+        // horizontal overflow site-wide, and adding overflow-x: hidden on
+        // this element specifically would (per the CSS overflow-x/y pairing
+        // rule) force its overflow-y to "auto", creating a second, separate
+        // scroll container nested inside the page's one true scroll.
       }}
     >
       <Particles kind="sparkle" count={intensity.sparkle} active theme={theme} />
@@ -248,7 +247,7 @@ export default function BirthdayExperience({ record, isPreview = false }) {
             >
               Happy Birthday,
               <br />
-              <span style={{ color: theme.gold }}>{record.name}</span>! 🎂
+              <span style={{ color: theme.gold }}>{record.name}</span>! ❤️🎂
             </h1>
             <button
               onClick={replay}
